@@ -8,6 +8,7 @@ public class SqlConn {
     public static final String DRIVER_CLASS = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     public static final String URL = "jdbc:sqlserver://PF3ZWGE4\\SQLEXPRESS:1433;DatabaseName=Employees_new;encrypt=true;trustServerCertificate=true;integratedsecurity=true;";
     public static final String SELECTALL_EMPLOYEES_QUERY = "SELECT EmpId, EmpName, Designation, Department, Salary FROM EmployeeData WITH(NOLOCK)";
+    public static final String FilteredEmployees_display = "SELECT EmpId, EmpName, Designation, Department, Salary FROM FilteredEmployees WITH(NOLOCK)";
     public static final String INSERT_EMPLOYEE_QUERY = "INSERT INTO EmployeeData(EmpId, EmpName, Designation, Department, Salary) VALUES (?, ?, ?, ?, ?)";
     public static final String ADD_ATTENDANCE_QUERY = "begin tran if exists (select * from AttendanceMaster with (updlock,serializable) where EmpId = ?) begin update AttendanceMaster set WorkDays = ? where EmpId = ? end else begin insert into AttendanceMaster (EmpId, WorkDays) values (?, ?) end commit tran";
 
@@ -59,10 +60,10 @@ public class SqlConn {
         AddAttendance(Id, ""+0);
     }
 
-    public static void DisplayAllEmployees() {
+    public static void DisplayAllEmployees(String qry) {
         long id = 0;
         try (Connection con = getConnection();) {
-            PreparedStatement pstmt = con.prepareStatement(SqlConn.SELECTALL_EMPLOYEES_QUERY, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement pstmt = con.prepareStatement(qry);
             ResultSet rs = pstmt.executeQuery();
             if (rs.getFetchSize() != 0) {
                 System.out.println("-------------------------------------------------------------------------------------------------");
@@ -127,7 +128,7 @@ public class SqlConn {
     public static ArrayList<String> IdsToAddAttendance(){
         ArrayList<String> ids = new ArrayList<String>();
         try(Connection con = getConnection()){
-            String sql = "SELECT e.EmpId FROM EmployeeData AS e WHERE e.EmpId NOT IN (SELECT a.EmpId FROM AttendanceMaster a WHERE e.EmpId = a.EmpId)";
+            String sql = "SELECT e.EmpId FROM EmployeeData AS e WHERE e.EmpId NOT IN (SELECT a.EmpId FROM AttendanceMaster a WHERE e.EmpId = a.EmpId AND a.WorkDays!=0)";
             PreparedStatement pstmt = con.prepareStatement(sql);
             ResultSet rs = pstmt.executeQuery();
             if(rs.next()) {
@@ -156,4 +157,31 @@ public class SqlConn {
         }
         return 0;
     }
+
+    public static int TableSize(String qry){
+        try(Connection con = getConnection()){
+            PreparedStatement pstmt = con.prepareStatement(qry);
+            ResultSet rs = pstmt.executeQuery();
+            rs.next();
+            return rs.getInt(1);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public static void FilterEmployees(){
+        try(Connection con = getConnection()){
+            String sql = "delete from FilteredEmployees where EmpId in (select EmpId from AttendanceMaster where WorkDays<10)\n";
+            PreparedStatement pstmt = con.prepareStatement(sql);
+            pstmt.executeUpdate();
+            System.out.println("Employees filtered\n");
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
 }
