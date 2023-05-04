@@ -8,12 +8,12 @@ public class TestEmployee{
         int choice = 1, idToFind = 0;
         boolean isFiltered = false;
         HashMap<Employee,Integer> empHash = new HashMap<Employee, Integer>();
-        HashMap<Integer, Employee> employeeIdMapping = new HashMap<Integer, Employee>();
         ArrayList<String> employeesToAddAttendance = new ArrayList<String>();
         MasterData mData = new MasterData(employees);
         AttendanceMaster am = new AttendanceMaster(empHash);
         Scanner scin = new Scanner(System.in);
         int empCount = SqlConn.GetEmployeesCount();
+        System.out.println("Total employees: " + empCount);
 
         while(true){
             Employee employee = new Employee();
@@ -24,14 +24,12 @@ public class TestEmployee{
                 employee.setDesg(""); //to validate department
                 employee.setDept(""); //to validate designation
                 employee.setSal(0);  //to set the correct salary
-                employeeIdMapping.put(employee.getEmpID(), employee);
-                employees.add(employee);
                 SqlConn.InsertEmployee(""+employee.getEmpID(),employee.getName(),employee.getDesg(),employee.getDept(),""+employee.getSal());
                 isFiltered = false;
                 System.out.println();
             }
             else if(choice == 2){
-                SqlConn.DisplayAllEmployees();
+                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY);
             }
 
             else if(choice == 3){
@@ -61,12 +59,13 @@ public class TestEmployee{
             }
 
             else if(choice == 5){
-                if(employees.size()!=0){
-                    if(employeesToAddAttendance.size()==0){
-                        am.FilterEmployeeList();
+                if(empCount!=0){
+                    int size1 = SqlConn.TableSize("SELECT COUNT(EmpId) FROM AttendanceMaster where Workdays!=0");
+                    if(size1 == empCount){
                         isFiltered = true;
                         System.out.println("Filtered Employees list\n");
-                        am.showEligibleList();
+                        SqlConn.FilterEmployees();
+                        SqlConn.DisplayAllEmployees(SqlConn.FilteredEmployees_display);
                     }
                     else{
                         System.out.println("Provide attendance for all available employees ..... choose menu choice 3 to add attendance\n");
@@ -79,7 +78,7 @@ public class TestEmployee{
 
             else if(choice == 6){
                 int sortChoice = 0;
-                if(employees.size()!=0){
+                if(empCount!=0){
                     while(true){
                         menuOptions = "\n---- Sorting Menu ----\n1.Sort by Name Ascending\n2.Sort by Name Descending\n3.Sort by Designation Ascending\n4.Sort by Designation Descending\n5.Sort by Department Ascending\n6.Sort by Department Descending\n7.Exit sorting\nEnter choice: ";
                         sortChoice = ValidMenuOption(menuOptions, 1, 7);
@@ -89,27 +88,27 @@ public class TestEmployee{
                         else{
                             if(sortChoice == 1){
                                 System.out.println("\nSort by Name (Ascending)");
-                                Collections.sort(employees, new NameSorting());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY EmpName");
                             }
                             else if(sortChoice == 2){
                                 System.out.println("\nSort by Name (Descending)");
-                                Collections.sort(employees, new NameSorting().reversed());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY EmpName DESC");
                             }
                             else if(sortChoice == 3){
                                 System.out.println("\nSort by Designation (Ascending)");
-                                Collections.sort(employees, new DesignationSorting());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY Designation");
                             }
                             else if(sortChoice == 4){
                                 System.out.println("\nSort by Designation (Descending)");
-                                Collections.sort(employees, new DesignationSorting().reversed());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY Designation DESC");
                             }
                             else if(sortChoice == 5){
                                 System.out.println("\nSort by Department (Ascending)");
-                                Collections.sort(employees, new DepartmentSorting());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY Department");
                             }
                             else if(sortChoice == 6){
                                 System.out.println("\nSort by Department (Descending)");
-                                Collections.sort(employees, new DepartmentSorting().reversed());
+                                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY Department DESC");
                             }
                             mData.displayEmployees();
                         }
@@ -119,9 +118,9 @@ public class TestEmployee{
                     System.out.println("No employees available to sort");
                 }
             }
-
+// Need to make it with sql server
             else if(choice == 7){
-                if(employees.size()!=0){
+                if(empCount!=0){
                     if(isFiltered){
                         SalCalculator salCalc = new SalCalculator();
                         salCalc.CalculateSalary(empHash);
@@ -198,22 +197,3 @@ public class TestEmployee{
         return value;
     }
 }
-
-// Overriding Comparators to sort various features
-class NameSorting implements Comparator<Employee>{
-    @Override public int compare(Employee emp1, Employee emp2){
-        return emp1.getName().compareTo(emp2.getName());
-    }
-}
-class DesignationSorting implements Comparator<Employee>{
-    @Override public int compare(Employee emp1, Employee emp2){
-        return emp1.getDesg().compareTo(emp2.getDesg());
-    }
-}
-
-class DepartmentSorting implements Comparator<Employee>{
-    @Override public int compare(Employee emp1, Employee emp2){
-        return emp1.getDept().compareTo(emp2.getDept());
-    }
-}
-
