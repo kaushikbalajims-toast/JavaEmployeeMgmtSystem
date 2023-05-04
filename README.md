@@ -1,4 +1,4 @@
-# JavaEmployeeMgmtSystem
+# Employee Management System using Java and MSSQL server
 
 Implementing https://github.com/kaushikbalajims-toast/Java-task-3 project using Database instead of Data structures
 
