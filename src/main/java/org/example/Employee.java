@@ -36,21 +36,16 @@ class Employee{
     public void setName(String name){
         boolean starting = true;
         Scanner sc = new Scanner(System.in);
-        while(true){
-            if(starting == true){
+        do {
+            if (starting) {
                 System.out.print("Enter name: ");
                 name = sc.nextLine();
                 starting = false;
             }
-            if(name.matches("^[A-Z][a-zA-Z ]+")){
-                break;
-            }
-            else{
-                System.out.println("Enter valid name (Start with caps)\n");
-                System.out.print("Enter name: ");
-                name = sc.nextLine();
-            }
-        }
+            System.out.println("Enter valid name (Start with caps)\n");
+            System.out.print("Enter name: ");
+            name = sc.nextLine();
+        } while (!name.matches("^[A-Z][a-zA-Z ]+"));
         this.name = name;
         this.empID = SqlConn.LastId()+1;
     }
