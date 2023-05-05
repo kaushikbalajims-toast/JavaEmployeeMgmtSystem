@@ -10,7 +10,7 @@ public class SqlConn {
     public static final String SELECTALL_EMPLOYEES_QUERY = "SELECT EmpId, EmpName, Designation, Department, Salary FROM EmployeeData WITH(NOLOCK)";
     public static final String FilteredEmployees_display = "SELECT EmpId, EmpName, Designation, Department, Salary FROM FilteredEmployees WITH(NOLOCK)";
     public static final String INSERT_EMPLOYEE_QUERY = "INSERT INTO EmployeeData(EmpId, EmpName, Designation, Department, Salary) VALUES (?, ?, ?, ?, ?)";
-    public static final String ADD_ATTENDANCE_QUERY = "begin tran if exists (select * from AttendanceMaster with (updlock,serializable) where EmpId = ?) begin update AttendanceMaster set WorkDays = ? where EmpId = ? end else begin insert into AttendanceMaster (EmpId, WorkDays) values (?, ?) end commit tran";
+    public static final String ADD_ATTENDANCE_QUERY = "begin tran if exists (select * from AttendanceMaster with (nolock) where EmpId = ?) begin update AttendanceMaster set WorkDays = ? where EmpId = ? end else begin insert into AttendanceMaster (EmpId, WorkDays) values (?, ?) end commit tran";
 
 
 
@@ -124,7 +124,7 @@ public class SqlConn {
     public static ArrayList<String> IdsToAddAttendance(){
         ArrayList<String> ids = new ArrayList<String>();
         try(Connection con = getConnection()){
-            String sql = "SELECT e.EmpId FROM EmployeeData AS e WHERE e.EmpId NOT IN (SELECT a.EmpId FROM AttendanceMaster a WHERE e.EmpId = a.EmpId AND a.WorkDays!=0)";
+            String sql = "SELECT e.EmpId FROM EmployeeData AS e WITH(NOLOCK) WHERE e.EmpId NOT IN (SELECT a.EmpId FROM AttendanceMaster a WHERE e.EmpId = a.EmpId AND a.WorkDays!=0)";
             PreparedStatement pstmt = con.prepareStatement(sql);
             ResultSet rs = pstmt.executeQuery();
             if(rs.next()) {
@@ -154,9 +154,9 @@ public class SqlConn {
         return 0;
     }
 
-    public static int TableSize(String qry){
+    public static int TableSize(){
         try(Connection con = getConnection()){
-            PreparedStatement pstmt = con.prepareStatement(qry);
+            PreparedStatement pstmt = con.prepareStatement("SELECT COUNT(EmpId) FROM AttendanceMaster where Workdays!=0");
             ResultSet rs = pstmt.executeQuery();
             rs.next();
             return rs.getInt(1);

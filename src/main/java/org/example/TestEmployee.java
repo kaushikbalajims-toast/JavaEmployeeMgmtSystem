@@ -9,8 +9,8 @@ public class TestEmployee{
         boolean isFiltered = false;
         HashMap<Employee,Integer> empHash = new HashMap<Employee, Integer>();
         ArrayList<String> employeesToAddAttendance = new ArrayList<String>();
-        MasterData mData = new MasterData(employees);
-        AttendanceMaster am = new AttendanceMaster(empHash);
+        MasterData mData = new MasterData();
+        AttendanceMaster am = new AttendanceMaster();
         Scanner scin = new Scanner(System.in);
         int empCount = SqlConn.GetEmployeesCount();
         System.out.println("Total employees: " + empCount);
@@ -65,7 +65,7 @@ public class TestEmployee{
 
             else if(choice == 5){
                 if(empCount!=0){
-                    int size1 = SqlConn.TableSize("SELECT COUNT(EmpId) FROM AttendanceMaster where Workdays!=0");
+                    int size1 = SqlConn.TableSize();
                     if(size1 == empCount){
                         isFiltered = true;
                         System.out.println("Filtered Employees list\n");
@@ -127,7 +127,6 @@ public class TestEmployee{
                 if(empCount!=0){
                     if(isFiltered){
                         SalCalculator salCalc = new SalCalculator();
-//                        salCalc.CalculateSalary(empHash);
                         salCalc.GetSalary();
                     }
                     else{
