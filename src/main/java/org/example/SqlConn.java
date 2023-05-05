@@ -65,16 +65,12 @@ public class SqlConn {
         try (Connection con = getConnection();) {
             PreparedStatement pstmt = con.prepareStatement(qry);
             ResultSet rs = pstmt.executeQuery();
-            if (rs.getFetchSize() != 0) {
-                System.out.println("-------------------------------------------------------------------------------------------------");
-                System.out.format("%10s %20s %20s %20s %20s", "Employee ID", "Name", "Designation", "Department", "Salary");
-                System.out.println();
-                System.out.println("-------------------------------------------------------------------------------------------------");
-                while (rs.next()) {
-                    System.out.printf("%10s %20s %20s %20s %20s%n", rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5));
-                }
-            } else {
-                System.out.println("Empty database");
+            System.out.println("-------------------------------------------------------------------------------------------------");
+            System.out.format("%10s %20s %20s %20s %20s", "Employee ID", "Name", "Designation", "Department", "Salary");
+            System.out.println();
+            System.out.println("-------------------------------------------------------------------------------------------------");
+            while (rs.next()) {
+                System.out.printf("%10s %20s %20s %20s %20s%n", rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,9 +169,14 @@ public class SqlConn {
 
     public static void FilterEmployees(){
         try(Connection con = getConnection()){
-            String sql = "delete from FilteredEmployees where EmpId in (select EmpId from AttendanceMaster where WorkDays<10)\n";
-            PreparedStatement pstmt = con.prepareStatement(sql);
+            String sql = "delete from FilteredEmployees where EmpId in (select EmpId from AttendanceMaster where WorkDays<10)";
+            String sql1 = "if exists(SELECT 1 FROM sys.tables WHERE type = 'U' AND object_id = object_id('FilteredEmployees')) BEGIN DROP TABLE FilteredEmployees END select * into FilteredEmployees from EmployeeData";
+
+            PreparedStatement pstmt = con.prepareStatement(sql1);
             pstmt.executeUpdate();
+            pstmt = con.prepareStatement(sql);
+            pstmt.executeUpdate();
+
             System.out.println("Employees filtered\n");
         }
         catch (Exception e){
