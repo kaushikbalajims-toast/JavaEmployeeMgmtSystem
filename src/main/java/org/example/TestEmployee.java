@@ -25,11 +25,15 @@ public class TestEmployee{
                 employee.setDept(""); //to validate designation
                 employee.setSal(0);  //to set the correct salary
                 SqlConn.InsertEmployee(""+employee.getEmpID(),employee.getName(),employee.getDesg(),employee.getDept(),""+employee.getSal());
+                SqlConn.AddAttendance(""+employee.getEmpID(), ""+0);
                 isFiltered = false;
                 System.out.println();
             }
             else if(choice == 2){
-                SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY);
+                if(empCount!=0)
+                    SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY);
+                else
+                    System.out.println("No employees to display\n");
             }
 
             else if(choice == 3){
@@ -49,11 +53,12 @@ public class TestEmployee{
                     System.out.println("No employees available to update attendance to");
                 }
                 else{
-                    idToFind = GetAttendanceAndID(0, 1000, empCount+1000);
+                    idToFind = GetAttendanceAndID(0, 0, empCount+1000);
                     int days = GetAttendanceAndID(idToFind, 0, 30);
                     boolean isFound = SqlConn.FindEmployee(String.valueOf(idToFind));
                     if(isFound) {
                         SqlConn.AddAttendance(""+idToFind, ""+days);
+                        isFiltered = false;
                     }
                 }
             }
@@ -77,7 +82,7 @@ public class TestEmployee{
             }
 
             else if(choice == 6){
-                int sortChoice = 0;
+                int sortChoice;
                 if(empCount!=0){
                     while(true){
                         menuOptions = "\n---- Sorting Menu ----\n1.Sort by Name Ascending\n2.Sort by Name Descending\n3.Sort by Designation Ascending\n4.Sort by Designation Descending\n5.Sort by Department Ascending\n6.Sort by Department Descending\n7.Exit sorting\nEnter choice: ";
@@ -110,7 +115,6 @@ public class TestEmployee{
                                 System.out.println("\nSort by Department (Descending)");
                                 SqlConn.DisplayAllEmployees(SqlConn.SELECTALL_EMPLOYEES_QUERY + " ORDER BY Department DESC");
                             }
-                            mData.displayEmployees();
                         }
                     }
                 }
@@ -123,7 +127,8 @@ public class TestEmployee{
                 if(empCount!=0){
                     if(isFiltered){
                         SalCalculator salCalc = new SalCalculator();
-                        salCalc.CalculateSalary(empHash);
+//                        salCalc.CalculateSalary(empHash);
+                        salCalc.GetSalary();
                     }
                     else{
                         System.out.println("Filter employees before providing salary ..... 5 to filter employees");
