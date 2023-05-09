@@ -2,6 +2,7 @@ package org.example;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class SqlConn {
 
@@ -9,7 +10,7 @@ public class SqlConn {
     public static final String URL = "jdbc:sqlserver://PF3ZWGE4\\SQLEXPRESS:1433;DatabaseName=Employees_new;encrypt=true;trustServerCertificate=true;integratedsecurity=true;";
     public static final String SELECTALL_EMPLOYEES_QUERY = "SELECT EmpId, EmpName, Designation, Department, Salary FROM EmployeeData WITH(NOLOCK)";
     public static final String FilteredEmployees_display = "SELECT EmpId, EmpName, Designation, Department, Salary FROM FilteredEmployees WITH(NOLOCK)";
-    public static final String INSERT_EMPLOYEE_QUERY = "INSERT INTO EmployeeData(EmpId, EmpName, Designation, Department, Salary) VALUES (?, ?, ?, ?, ?)";
+    public static final String INSERT_EMPLOYEE_QUERY = "INSERT INTO EmployeeData(EmpName, Designation, Department, Salary) VALUES (?, ?, ?, ?)";
     public static final String ADD_ATTENDANCE_QUERY = "begin tran if exists (select * from AttendanceMaster with (nolock) where EmpId = ?) begin update AttendanceMaster set WorkDays = ? where EmpId = ? end else begin insert into AttendanceMaster (EmpId, WorkDays) values (?, ?) end commit tran";
 
 
@@ -35,14 +36,13 @@ public class SqlConn {
         return null;
     }
 
-    public static void InsertEmployee(String Id, String name, String desg, String dept, String sal) {
-        long id = 0;
+    public static void InsertEmployee(String name, String desg, String dept, String sal) {
+        String id;
         try (Connection con = getConnection(); PreparedStatement pstmt = con.prepareStatement(SqlConn.INSERT_EMPLOYEE_QUERY, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, Id);
-            pstmt.setString(2, name);
-            pstmt.setString(3, desg);
-            pstmt.setString(4, dept);
-            pstmt.setString(5, sal);
+            pstmt.setString(1, name);
+            pstmt.setString(2, desg);
+            pstmt.setString(3, dept);
+            pstmt.setString(4, sal);
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -54,10 +54,15 @@ public class SqlConn {
                     e.printStackTrace();
                 }
             }
+            PreparedStatement pstmt1 = con.prepareStatement("SELECT MAX(EmpId) FROM EmployeeData");
+
+            ResultSet rs = pstmt1.executeQuery();
+            rs.next();
+            id = rs.getString(1);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        AddAttendance(Id, ""+0);
+        AddAttendance(id, ""+0);
     }
 
     public static void DisplayAllEmployees(String qry) {
@@ -184,5 +189,39 @@ public class SqlConn {
         }
     }
 
+    public static void MakePayslip(){
+        try(Connection con = SqlConn.getConnection()){
+            PreparedStatement pstmt = con.prepareStatement("SELECT f.EmpId, f.EmpName, f.Designation, f.Department, f.Salary, a.WorkDays FROM FilteredEmployees f, AttendanceMaster a where a.EmpId = f.EmpId");
+            ResultSet rs = pstmt.executeQuery();
+            double pf, sal;
+            double allowance = 0, grossSalary = 0, netSalary = 0;
+            System.out.println("\t\t\t\t\tEmployees payslip\n---------------------------------------------------------------------------------------------------------------------------------------");
+            System.out.format("%5s %12s %18s %15s %13s %13s %13s %10s %13s %13s", "ID", "Name", "Designation", "Department", "Salary", "Attendance", "Allowance", "PF", "Gross", "Net");
+            System.out.println("\n---------------------------------------------------------------------------------------------------------------------------------------");
 
+            while(rs.next()){
+                if(Objects.equals(rs.getString("Designation"), "Manager")){
+                    sal = (rs.getDouble(5)*10)/12;
+                    allowance = sal*20/100;
+                    pf = allowance/2;
+                }
+                else{
+                    sal = (rs.getDouble(5)*10)/11;
+                    allowance = sal*10/100;
+                    pf = allowance;
+                }
+
+                pf = (Math.round((pf)*100.0)/100.0);
+                sal = (Math.round((sal)*100.0)/100.0);
+                allowance = (Math.round((allowance)*100.0)/100.0);
+                grossSalary = (Math.round((sal + allowance)*100.0)/100.0);
+                netSalary = (Math.round((grossSalary - pf)*100.0)/100.0);
+                System.out.format("%5s %15s %13s %15s %15s %9s %15s %13s %13s %13s", rs.getString(1),rs.getString(2), rs.getString(3), rs.getString(4), sal, rs.getInt(6), allowance,pf, grossSalary, netSalary);
+                System.out.println();
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

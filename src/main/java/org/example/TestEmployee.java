@@ -4,13 +4,9 @@ import java.util.*;
 
 public class TestEmployee{
     public static void main(String[] args) {
-        ArrayList<Employee> employees = new ArrayList<Employee>();
         int choice = 1, idToFind = 0;
         boolean isFiltered = false;
-        HashMap<Employee,Integer> empHash = new HashMap<Employee, Integer>();
-        ArrayList<String> employeesToAddAttendance = new ArrayList<String>();
-        MasterData mData = new MasterData();
-        AttendanceMaster am = new AttendanceMaster();
+        ArrayList<String> employeesToAddAttendance;
         Scanner scin = new Scanner(System.in);
         int empCount = SqlConn.GetEmployeesCount();
         System.out.println("Total employees: " + empCount);
@@ -24,7 +20,7 @@ public class TestEmployee{
                 employee.setDesg(""); //to validate department
                 employee.setDept(""); //to validate designation
                 employee.setSal(0);  //to set the correct salary
-                SqlConn.InsertEmployee(""+employee.getEmpID(),employee.getName(),employee.getDesg(),employee.getDept(),""+employee.getSal());
+                SqlConn.InsertEmployee(employee.getName(),employee.getDesg(),employee.getDept(),""+employee.getSal());
                 SqlConn.AddAttendance(""+employee.getEmpID(), ""+0);
                 isFiltered = false;
                 System.out.println();
@@ -126,8 +122,7 @@ public class TestEmployee{
             else if(choice == 7){
                 if(empCount!=0){
                     if(isFiltered){
-                        SalCalculator salCalc = new SalCalculator();
-                        salCalc.GetSalary();
+                        SqlConn.MakePayslip();
                     }
                     else{
                         System.out.println("Filter employees before providing salary ..... 5 to filter employees");
